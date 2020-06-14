@@ -38,7 +38,8 @@ Esta rota aceita um filtro opcional de acordo com a latitude. Os seguintes parâ
         "longitude": 0.0000,
         "email": "",
         "image": "",
-        "category": null
+        "category": null,
+        "parking": false
     }] // array contendo os estabelecimentos encontrados
 }
 ```
@@ -60,7 +61,8 @@ Lista os dados do estabelecimento pelo id.
         "longitude": 0.0000,
         "email": "",
         "image": "",
-        "category": null
+        "category": null,
+        "parking": false
     } // objeto contendo os dados do estabelecimento procurado
 }
 ```

@@ -7,6 +7,7 @@ exports.up = async function up(knex) {
         table.float("longitude", 17, 15).notNullable();
         table.string("email").notNullable().unique();
         table.string("password", 60).notNullable();
+        table.boolean("parking").notNullable();
         table.string("image");
         table.string("category");
         table.string("token", 60);

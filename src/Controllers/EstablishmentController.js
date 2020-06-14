@@ -36,7 +36,8 @@ class EstablishmentController {
                         "longitude",
                         "email",
                         "image",
-                        "category"
+                        "category",
+                        "parking"
                     );
             } else {
                 result = await Knex("establishment").select(
@@ -47,14 +48,18 @@ class EstablishmentController {
                     "longitude",
                     "email",
                     "image",
-                    "category"
+                    "category",
+                    "parking"
                 );
             }
-            console.log(result);
+            result = result.map((item) => {
+                return { ...item, parking: item.parking === 1 };
+            });
             return response
                 .status(200)
                 .send({ status: true, message: "", data: result });
         } catch (err) {
+            console.log(err);
             return response
                 .status(500)
                 .send({ status: false, message: "Erro não tratado." });
@@ -81,12 +86,14 @@ class EstablishmentController {
                     "longitude",
                     "email",
                     "image",
-                    "category"
+                    "category",
+                    "parking"
                 );
+            const parking = result[0].parking ? true : false;
             return response.status(200).send({
                 status: true,
                 message: "",
-                data: result[0],
+                data: { ...result[0], parking },
             });
         } catch (err) {
             return response.status(500).send({
@@ -105,6 +112,8 @@ class EstablishmentController {
                 email,
                 password,
             } = request.body;
+
+            const parking = request.body.parking ? 1 : 0;
 
             const cnpj_onlynumbers = String(cnpj).replace(/[^0-9]/gi, "");
 
@@ -131,6 +140,7 @@ class EstablishmentController {
                 longitude,
                 email,
                 password: password_hashed,
+                parking,
             };
 
             if (request.body.category) {
@@ -153,7 +163,6 @@ class EstablishmentController {
             });
         }
     }
-
     async addImage(request, response) {
         if (!request.params.id) {
             return response.status(400).send({
@@ -181,7 +190,6 @@ class EstablishmentController {
                 .send({ status: false, message: "Erro não tratado." });
         }
     }
-
     async getToken(request, response) {
         if (!request.body.email || !request.body.password) {
             return response
