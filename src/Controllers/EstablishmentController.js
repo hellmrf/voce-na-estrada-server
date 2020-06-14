@@ -1,7 +1,8 @@
-const conn = require("../Database/db");
 const CheckCNPJ = require("../checkCNPJ");
 const Knex = require("../Database/db");
 const bcrypt = require("bcrypt");
+
+const Establishment = require("../Classes/Establishment");
 
 const validateEmail = (email) => {
     const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -9,8 +10,91 @@ const validateEmail = (email) => {
 };
 
 class EstablishmentController {
-    async index(request, response) {}
-    async detail(request, response) {}
+    async index(request, response) {
+        const { latitude, longitude, radius = 5 } = request.query || null;
+        try {
+            let result;
+            if (latitude && longitude) {
+                // Dividir a distância por 111.111 resulta na diferença de latlong.
+                const delta = parseFloat(radius) / 222.222;
+                const minLat = parseFloat(latitude) - delta;
+                const maxLat = parseFloat(latitude) + delta;
+                const minLong = parseFloat(longitude) - delta;
+                const maxLong = parseFloat(longitude) + delta;
+                console.log("long:", [minLong, maxLong], "lat:", [
+                    minLat,
+                    maxLat,
+                ]);
+                result = await Knex("establishment")
+                    .whereBetween("longitude", [minLong, maxLong])
+                    .whereBetween("latitude", [minLat, maxLat])
+                    .select(
+                        "id",
+                        "company_name",
+                        "cnpj",
+                        "latitude",
+                        "longitude",
+                        "email",
+                        "image",
+                        "category"
+                    );
+            } else {
+                result = await Knex("establishment").select(
+                    "id",
+                    "company_name",
+                    "cnpj",
+                    "latitude",
+                    "longitude",
+                    "email",
+                    "image",
+                    "category"
+                );
+            }
+            console.log(result);
+            return response
+                .status(200)
+                .send({ status: true, message: "", data: result });
+        } catch (err) {
+            return response
+                .status(500)
+                .send({ status: false, message: "Erro não tratado." });
+        }
+    }
+    async detail(request, response) {
+        if (!request.params.id) {
+            return response.status(400).send({
+                status: false,
+                message: "O ID do estabelecimento é obrigatório.",
+            });
+        }
+
+        const { id } = request.params;
+
+        try {
+            const result = await Knex("establishment")
+                .where({ id })
+                .select(
+                    "id",
+                    "company_name",
+                    "cnpj",
+                    "latitude",
+                    "longitude",
+                    "email",
+                    "image",
+                    "category"
+                );
+            return response.status(200).send({
+                status: true,
+                message: "",
+                data: result[0],
+            });
+        } catch (err) {
+            return response.status(500).send({
+                status: false,
+                message: "Erro não tratado.",
+            });
+        }
+    }
     async create(request, response) {
         try {
             const {
@@ -22,7 +106,9 @@ class EstablishmentController {
                 password,
             } = request.body;
 
-            const check_cnpj = await CheckCNPJ.checkCNPJ(cnpj);
+            const cnpj_onlynumbers = String(cnpj).replace(/[^0-9]/gi, "");
+
+            const check_cnpj = await CheckCNPJ.checkCNPJ(cnpj_onlynumbers);
 
             if (!check_cnpj) {
                 response.status(400);
@@ -36,7 +122,7 @@ class EstablishmentController {
                 );
             }
 
-            const password_hashed = await bcrypt.hash(password, 10);
+            const password_hashed = await bcrypt.hash(String(password), 10);
 
             const data = {
                 company_name,
@@ -65,6 +151,55 @@ class EstablishmentController {
                 message:
                     "Por favor, verifique a rota /readme.md para informações sobre como utilizar esta rota.",
             });
+        }
+    }
+
+    async addImage(request, response) {
+        if (!request.params.id) {
+            return response.status(400).send({
+                status: false,
+                message: "O ID do estabelecimento é obrigatório.",
+            });
+        } else if (!request.file) {
+            return response.status(400).send({
+                status: false,
+                message: "O arquivo é obrigatório.",
+            });
+        }
+
+        const { id } = request.params;
+        const { filename } = request.file;
+
+        try {
+            await Knex("establishment")
+                .where({ id })
+                .update({ image: filename });
+            return response.status(200).send({ status: true, message: "" });
+        } catch (err) {
+            return response
+                .status(500)
+                .send({ status: false, message: "Erro não tratado." });
+        }
+    }
+
+    async getToken(request, response) {
+        if (!request.body.email || !request.body.password) {
+            return response
+                .status(401)
+                .send(
+                    "Confira /readme.md para a utilização correta desta rota."
+                );
+        }
+        const { email, password } = request.body;
+
+        const establishment = new Establishment();
+
+        const login = await establishment.login(email, password);
+
+        if (login.status === true) {
+            return response.status(200).json({ ...login });
+        } else {
+            return response.status(login.error).json({ ...login });
         }
     }
 }

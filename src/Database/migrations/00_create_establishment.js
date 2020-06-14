@@ -1,16 +1,16 @@
-const Knex = require("knex");
-
 exports.up = async function up(knex) {
-    return knex.schema.createTable("establishment", (table) => {
+    return await knex.schema.createTable("establishment", (table) => {
         table.increments("id").primary();
         table.string("company_name").notNullable();
         table.string("cnpj", 14).notNullable();
-        table.float("latitude").notNullable();
-        table.float("longitude").notNullable();
-        table.string("email").notNullable();
-        table.binary("password", 60).notNullable();
+        table.float("latitude", 17, 15).notNullable();
+        table.float("longitude", 17, 15).notNullable();
+        table.string("email").notNullable().unique();
+        table.string("password", 60).notNullable();
         table.string("image");
         table.string("category");
+        table.string("token", 60);
+        table.timestamp("token_date");
     });
 };
 

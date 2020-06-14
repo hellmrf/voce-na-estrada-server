@@ -1,12 +1,12 @@
 {
   "name": "ccrhack",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server.js",
-    "knex:migrate": "knex migrate:latest --knexfile knexfile.js",
+    "knex:migrate": "knex migrate:latest --knexfile knexfile.js && echo \"\n\n\n\n\nATENÇÃO:\n\nAs chaves estrangeiras não foram criadas devido a um erro no Knex que ainda não foi corrigido. Por favor, verifique o banco de dados e crie manualmente as chaves estrangeiras:\n\nproducts.company_id -> establishment.id\nratings.company_id -> establishment.id\nratings.user_id -> users.id \n\n\n\n\n\"",
     "knex:seed": "knex seed:run --knexfile knexfile.js"
   },
   "author": "",
@@ -15,8 +15,10 @@
     "axios": "^0.19.2",
     "bcrypt": "^5.0.0",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "express": "^4.17.1",
     "knex": "^0.21.1",
+    "multer": "^1.4.2",
     "mysql": "^2.18.1"
   },
   "devDependencies": {
